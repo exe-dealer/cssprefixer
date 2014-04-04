@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import engine
-import rules
-from engine import process
+from . import engine
+from . import rules
+from .engine import process
 
 __all__ = ('process', 'engine', 'rules')

@@ -15,25 +15,32 @@
 
 import cssutils
 import re
-from rules import rules as tr_rules
-from rules import prefixRegex
+from cssprefixer.rules import rules as tr_rules
+from cssprefixer.rules import prefixRegex
 
 
-keyframesRegex = re.compile(r'@keyframes\s?\w+\s?{(.*)}')
+keyframesRegex = re.compile(r'@keyframes\s?(\w+)\s?{(.*)}')
 blockRegex = re.compile(r'\w+\s?\{(.*)\}')
 
 
 def magic(ruleset, debug, minify, filt, parser):
     if isinstance(ruleset, cssutils.css.CSSUnknownRule):
         if ruleset.cssText.startswith('@keyframes'):
-            inner = parser.parseString(keyframesRegex.split(ruleset.cssText.replace('\n', ''))[1])
+            kf = keyframesRegex.split(ruleset.cssText.replace('\n', ''))
+            keyframes_name = kf[1]
+            inner = parser.parseString(kf[2])
             # BUG: doesn't work when minified
             s = '' if minify else '\n'
-            return '@-webkit-keyframes {' + s + \
-            ''.join([magic(rs, debug, minify, ['webkit'], parser) for rs in inner]) \
-            + '}' + s + '@-moz-keyframes {' + s + \
-            ''.join([magic(rs, debug, minify, ['moz'], parser) for rs in inner]) \
-            + '}' + s + ruleset.cssText
+            return ruleset.cssText + ''.join(
+                '\n@-{0}-keyframes {1} {{\n{2}}}'.format(
+                    prefix,
+                    keyframes_name,
+                    ''.join(magic(rs, debug, minify, [prefix], parser)
+                            for rs in inner)
+                )
+                for prefix
+                in ('webkit', 'moz', 'ms', 'o')
+            )
         elif ruleset.cssText.startswith('from') or ruleset.cssText.startswith('to'):
             return ''.join([magic(rs, debug, minify, filt, parser)
                 for rs in parser.parseString(blockRegex.sub(r'\1', ruleset.cssText.replace('\n', ''))[1])])
@@ -73,7 +80,7 @@ def magic(ruleset, debug, minify, filt, parser):
                     ruleset.style.seq.append(rule, 'Property')
             except:
                 if debug:
-                    print 'warning with ' + str(rule)
+                    print('warning with ' + str(rule))
                 ruleset.style.seq.append(rule, 'Property')
         ruleset.style.seq._readonly = True
     elif hasattr(ruleset, 'cssRules'):
@@ -83,8 +90,8 @@ def magic(ruleset, debug, minify, filt, parser):
     if not cssText:  # blank rules return None so return an empty string
         return
     if minify or not hasattr(ruleset, 'style'):
-        return unicode(cssText)
-    return unicode(cssText) + '\n'
+        return cssText
+    return cssText + '\n'
 
 
 def process(string, debug=False, minify=False, filt=['webkit', 'moz', 'o', 'ms'], **prefs):
@@ -96,7 +103,7 @@ def process(string, debug=False, minify=False, filt=['webkit', 'moz', 'o', 'ms']
         cssutils.ser.prefs.useDefaults()
 
     # use the passed in prefs
-    for key, value in prefs.iteritems():
+    for key, value in prefs.items():
         if hasattr(cssutils.ser.prefs, key):
             cssutils.ser.prefs.__dict__[key] = value
 

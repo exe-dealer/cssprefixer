@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # CSSPrefixer
 # Copyright 2010 MyFreeWeb <me@myfreeweb.ru>
 
@@ -14,30 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-
-options = ['debug', 'minify']
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        import cssprefixer
-        result = ''
-        debug = minify = False
+    from optparse import OptionParser
+    from cssprefixer import process
 
-        # Two separate loops because user wants
-        # to specify options *after* filenames
-        for arg in sys.argv[1:]:
-            oarg = arg.replace('--', '')
-            if oarg in options:
-                globals()[oarg] = True
+    parser = OptionParser()
+    parser.add_option('-m', '--minify',
+        dest='minify',
+        default=False,
+        action='store_true'
+    )
+    parser.add_option('-d', '--debug',
+        dest='debug',
+        default=False,
+        action='store_true'
+    )
 
-        for arg in sys.argv[1:]:
-            if arg[:2] != '--':
-                result += cssprefixer.process(open(arg, 'r').read(), debug, minify)
-        try:
-            print result
-        except UnicodeEncodeError:
-            print result.encode('utf8')
-    else:
-        print "Usage: cssprefixer <filenames> <options>"
-        print "Options:" + reduce(lambda a, b: '%s --%s' % (a, b), options, '') # Javascript's Array.join, haha
+    options, args = parser.parse_args()
+
+    for fn in args:
+        print(process(open(fn, 'r').read(), options.debug, options.minify))
+

@@ -59,8 +59,8 @@ class PrefixerTestCase(unittest.TestCase):
                          'a{cursor:-moz-zoom-out;cursor:-webkit-zoom-out;cursor:zoom-out}')
 
     def test_flexbox(self):
-        self.assertEqual(cssprefixer.process('a{display: box;}', minify=True),
-                         'a{display:-moz-box;display:-webkit-box;display:box}')
+        self.assertEqual(cssprefixer.process('a{display: flex;}', minify=True),
+                         'a{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex}')
 
     def test_displaybox(self):
         self.assertEqual(cssprefixer.process('a{display: display;}', minify=True),
@@ -131,7 +131,7 @@ class PrefixerTestCase(unittest.TestCase):
     border-radius: 1em;
     transition: all 1s ease;
     box-shadow: #123456 0 0 10px;
-    display: box;
+    display: flex;
 }''', minify=False), '''.my-class, #my-id {
     -moz-border-radius: 1em;
     -webkit-border-radius: 1em;
@@ -143,9 +143,11 @@ class PrefixerTestCase(unittest.TestCase):
     -moz-box-shadow: #123456 0 0 10px;
     -webkit-box-shadow: #123456 0 0 10px;
     box-shadow: #123456 0 0 10px;
-    display: -moz-box;
     display: -webkit-box;
-    display: box
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex
     }''')
 
     def test_empty(self):
@@ -208,10 +210,6 @@ class WebkitPrefixerTestCase(unittest.TestCase):
         self.assertEqual(cssprefixer.process('a{-webkit-border-top-left-radius: 1em;-webkit-border-top-right-radius: 1em;-webkit-border-bottom-right-radius: 1em;-webkit-border-bottom-left-radius: 1em;}', minify=True),
                          'a{-webkit-border-top-left-radius:1em;-moz-border-radius-topleft:1em;border-top-left-radius:1em;-webkit-border-top-right-radius:1em;-moz-border-radius-topright:1em;border-top-right-radius:1em;-webkit-border-bottom-right-radius:1em;-moz-border-radius-bottomright:1em;border-bottom-right-radius:1em;-webkit-border-bottom-left-radius:1em;-moz-border-radius-bottomleft:1em;border-bottom-left-radius:1em}')
 
-    def test_flexbox(self):
-        self.assertEqual(cssprefixer.process('a{-webkit-display: box;}', minify=True),
-                         'a{display:-moz-box;display:-webkit-box;display:box}')
-
     def test_mq_common(self):
         self.assertEqual(cssprefixer.process('@media screen and (min-width:480px){a{-webkit-border-radius: 1em}}', minify=True),
                          '@media screen and (min-width:480px){a{-moz-border-radius:1em;-webkit-border-radius:1em;border-radius:1em}}')
@@ -228,10 +226,6 @@ class MozPrefixerTestCase(unittest.TestCase):
     def test_moz_border_radius(self):
         self.assertEqual(cssprefixer.process('a{-moz-border-top-left-radius: 1em;-moz-border-top-right-radius: 1em;-moz-border-bottom-right-radius: 1em;-moz-border-bottom-left-radius: 1em;}', minify=True),
                          'a{-webkit-border-top-left-radius:1em;-moz-border-radius-topleft:1em;border-top-left-radius:1em;-webkit-border-top-right-radius:1em;-moz-border-radius-topright:1em;border-top-right-radius:1em;-webkit-border-bottom-right-radius:1em;-moz-border-radius-bottomright:1em;border-bottom-right-radius:1em;-webkit-border-bottom-left-radius:1em;-moz-border-radius-bottomleft:1em;border-bottom-left-radius:1em}')
-
-    def test_flexbox(self):
-        self.assertEqual(cssprefixer.process('a{-moz-display: box;}', minify=True),
-                         'a{display:-moz-box;display:-webkit-box;display:box}')
 
     def test_mq_common(self):
         self.assertEqual(cssprefixer.process('@media screen and (min-width:480px){a{-moz-border-radius: 1em}}', minify=True),
@@ -396,10 +390,54 @@ class GradientTestCase(unittest.TestCase):
     }''')
 
     def test_keyframes(self):
+        self.maxDiff = None
         self.assertEqual(cssprefixer.process('''@keyframes round {
     from {border-radius: 2px}
     to {border-radius: 10px}
-    }''', minify=False), "@-webkit-keyframes {\nfrom {\n    -webkit-border-radius: 2px;\n    border-radius: 2px\n    }\nto {\n    -webkit-border-radius: 10px;\n    border-radius: 10px\n    }\n}\n@-moz-keyframes {\nfrom {\n    -moz-border-radius: 2px;\n    border-radius: 2px\n    }\nto {\n    -moz-border-radius: 10px;\n    border-radius: 10px\n    }\n}\n@keyframes round {\n    from {\n        border-radius: 2px\n        } to {\n        border-radius: 10px\n        }\n    }")
+    }''', minify=False),
+'''@keyframes round {
+    from {
+        border-radius: 2px
+        } to {
+        border-radius: 10px
+        }
+    }
+@-webkit-keyframes round {
+from {
+    -webkit-border-radius: 2px;
+    border-radius: 2px
+    }
+to {
+    -webkit-border-radius: 10px;
+    border-radius: 10px
+    }
+}
+@-moz-keyframes round {
+from {
+    -moz-border-radius: 2px;
+    border-radius: 2px
+    }
+to {
+    -moz-border-radius: 10px;
+    border-radius: 10px
+    }
+}
+@-ms-keyframes round {
+from {
+    border-radius: 2px
+    }
+to {
+    border-radius: 10px
+    }
+}
+@-o-keyframes round {
+from {
+    border-radius: 2px
+    }
+to {
+    border-radius: 10px
+    }
+}''')
 
 if __name__ == '__main__':
     unittest.main()

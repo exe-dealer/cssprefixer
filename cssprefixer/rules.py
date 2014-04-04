@@ -103,13 +103,21 @@ class DisplayReplacementRule(BaseReplacementRule):
     CSSUtils parser doesn't support duplicate properties, so that's dirty.
     """
     def get_prefixed_props(self, filt):
-        if self.prop.value == 'box':  # only add prefixes if the value is box
-            for prefix in [p for p in self.vendor_prefixes if p in filt]:
-                yield cssutils.css.Property(
-                        name='display',
-                        value='-%s-box' % prefix,
-                        priority=self.prop.priority
-                        )
+        if self.prop.value == 'flex':  # only add prefixes if the value is flex
+            yield from (
+                cssutils.css.Property(
+                    name='display',
+                    value=prefvals,
+                    priority=self.prop.priority
+                )
+                for prefvals
+                in (
+                    '-webkit-box',
+                    '-webkit-flex',
+                    '-moz-box',
+                    '-ms-flexbox',
+                )
+            )
 
 
 class TransitionReplacementRule(BaseReplacementRule):
@@ -283,4 +291,6 @@ rules = {
     'display': DisplayReplacementRule,
     'appearance': WebkitReplacementRule,
     'hyphens': BaseReplacementRule,
+
+    'animation': FullReplacementRule,
 }
