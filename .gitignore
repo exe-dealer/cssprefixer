@@ -3,5 +3,5 @@ test.css
 *DS_Store
 build
 dist
-env
+/pyvenv
 MANIFEST
